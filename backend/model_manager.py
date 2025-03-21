@@ -2,27 +2,28 @@ from ctransformers import AutoModelForCausalLM
 
 class LocalTextGenerator:
     """
-    Phase 1 approach: We do not rely heavily on generative answers.
-    We simply return the stored data or short textual expansions if needed.
+    Phase 1: Ensures responses are strictly based on stored personal data.
+    AI will NOT generate additional information beyond what is retrieved.
     """
 
     def __init__(self, model_path: str):
         print(f"🔄 Loading GGUF model from: {model_path}")
-        # For Phase 1, the model might not be actively generating new text,
-        # but let's load it so we can build upon it in future phases.
+
+        # Load the GGUF model but restrict full AI generation
         self.model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            model_type="mistral",  # for Mistral
+            model_type="mistral",  # Ensure the correct model type
             context_length=2048
         )
 
-    def generate_text(self, retrieved_text: str, query: str = "", max_length: int = 50):
+    def generate_text(self, retrieved_text: str, query: str = "", max_length: int = 50, temperature: float = 0.7, top_p: float = 0.9):
         """
-        Returns either the retrieved text or a short formatted response.
-        In Phase 1, we basically just echo the stored data,
-        ensuring no random hallucinations.
+        Returns the retrieved stored information exactly as it is.
+        Ensures responses are formatted correctly without hallucination.
         """
-        # If you'd like to integrate minimal "styling" or "rephrasing," you could do:
-        prompt = f"User: {query}\nAI (use only the retrieved data): {retrieved_text}"
-        # But let's keep it strictly returning the retrieved text:
-        return retrieved_text
+
+        if not retrieved_text.strip():
+            return "I don't have data for that."
+
+        # Properly format the response without hallucination
+        return retrieved_text.strip()

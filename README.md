@@ -50,6 +50,7 @@ Clone.AI/
 | `transformers==4.28.0`    | LLM model loading |
 | `torch==2.0.0`            | Required for model inference |
 | `ctransformers==0.2.27`   | Loads GGUF models optimized for **CPU** |
+pip install torch transformers peft accelerate datasets bitsandbytes sentencepiece
 
 ---
 

@@ -1,107 +1,109 @@
 import React, { useState } from "react";
+import { Card, Button, Alert, Form, Container } from "react-bootstrap";
+import { FaPlus, FaPaperPlane } from "react-icons/fa";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "./styles.css";
 
 function App() {
-  // State for adding personal text
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-
-  // State for querying AI
   const [query, setQuery] = useState("");
   const [answer, setAnswer] = useState("");
+  const [status, setStatus] = useState("");
 
-  // 1) Add new personal text
+  // Add personal text
   const handleAddText = async () => {
     try {
       const response = await fetch("http://127.0.0.1:8000/add_text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, content }),
-        mode: "cors",
       });
 
-      if (!response.ok) throw new Error(`Error: ${response.status}`);
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-      alert("Text added successfully!");
+      const data = await response.json();
+      setStatus(data.status === "duplicate" ? "Title already exists!" : "Text added successfully!");
       setTitle("");
       setContent("");
     } catch (error) {
-      console.error("Fetch error:", error);
-      alert("Failed to add text.");
+      console.error("Error adding text:", error);
+      setStatus("Failed to add text.");
     }
   };
 
-  // 2) Query the AI
+  // Query AI
   const handleQueryAI = async () => {
     try {
-        const response = await fetch("http://127.0.0.1:8000/query_ai", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ query })
-        });
+      const response = await fetch("http://127.0.0.1:8000/query_ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-        const data = await response.json();
-        if (!data.answer || data.answer.trim() === "") {
-            setAnswer("I don't have data for that.");  // ✅ Prevents frontend crashes
-        } else {
-            setAnswer(data.answer);
-        }
+      const data = await response.json();
+      setAnswer(data.answer || "No response.");
     } catch (error) {
-        console.error("Error fetching AI response:", error);
-        setAnswer("An error occurred. Please try again.");  // ✅ Ensures UI never breaks
+      console.error("Error querying AI:", error);
+      setAnswer("Failed to get AI response.");
     }
-};
-
-  
+  };
 
   return (
-    <div style={{ margin: "20px" }}>
-      <h1>Personal AI - Phase 1 (Text Only)</h1>
+    <Container className="container">
+      <h1>Clone.AI - Personal AI</h1>
 
-      {/* Section to add new personal text */}
-      <div style={{ marginBottom: "30px" }}>
-        <h2>Add Personal Data</h2>
-        <input
+      {/* Status Message */}
+      {status && <Alert variant="info">{status}</Alert>}
+
+      {/* Add Personal Data */}
+      <Card className="p-3">
+        <h2 className="mb-3">Add Personal Data</h2>
+        <Form.Control
           type="text"
-          placeholder="Title..."
+          placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          style={{ width: "300px", display: "block", marginBottom: "10px" }}
+          className="mb-2"
         />
-        <textarea
-          rows={4}
+        <Form.Control
+          as="textarea"
+          rows={3}
           placeholder="Content..."
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          style={{ width: "300px", marginBottom: "10px" }}
+          className="mb-2"
         />
-        <button onClick={handleAddText}>Add Text</button>
-      </div>
+        <Button variant="success" className="w-100" onClick={handleAddText}>
+          <FaPlus className="me-2" /> Add Text
+        </Button>
+      </Card>
 
-      {/* Section to query AI */}
-      <div>
-        <h2>Ask AI</h2>
-        <input
+      {/* Query AI */}
+      <Card className="p-3">
+        <h2 className="mb-3">Ask Your AI</h2>
+        <Form.Control
           type="text"
-          placeholder="Ask a question..."
+          placeholder="Ask something..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          style={{ width: "300px", display: "block", marginBottom: "10px" }}
+          className="mb-2"
         />
-        <button onClick={handleQueryAI}>Get Answer</button>
-      </div>
+        <Button variant="primary" className="w-100" onClick={handleQueryAI}>
+          <FaPaperPlane className="me-2" /> Get Answer
+        </Button>
+      </Card>
 
-      {/* Display AI response */}
+      {/* AI Response */}
       {answer && (
-        <div style={{ marginTop: "20px" }}>
+        <Card className="p-3">
           <h3>AI's Response:</h3>
-          <p>{answer}</p>
-        </div>
+          <Alert variant="secondary">{answer}</Alert>
+        </Card>
       )}
-    </div>
+    </Container>
   );
 }
 

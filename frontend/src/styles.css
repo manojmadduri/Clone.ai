@@ -1,0 +1,54 @@
+/* styles.css - Modern UI Enhancements */
+
+body {
+    background-color: #f5f7fa;
+    font-family: "Arial", sans-serif;
+  }
+  
+  .container {
+    max-width: 600px;
+    background: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    margin-top: 50px;
+  }
+  
+  h1 {
+    font-weight: bold;
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 20px;
+  }
+  
+  .card {
+    border: none;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  button {
+    font-size: 16px;
+    transition: 0.3s ease-in-out;
+  }
+  
+  button:hover {
+    transform: scale(1.05);
+  }
+  
+  input,
+  textarea {
+    border-radius: 8px;
+  }
+  
+  .alert {
+    font-weight: bold;
+    text-align: center;
+  }
+  

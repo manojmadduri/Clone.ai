@@ -5,37 +5,39 @@ from sentence_transformers import SentenceTransformer
 from db_manager import get_all_personal_texts
 import spacy
 
-# Load spaCy for potential text-based query enhancements
+# Load spaCy NLP model for query preprocessing
 nlp = spacy.load("en_core_web_sm")
 
+# FAISS Index Configuration
 INDEX_FILE = "personal_faiss.index"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
 class EmbeddingsManager:
     """
-    Builds and searches a FAISS index of personal data.
+    Handles FAISS-based retrieval of personal data.
     """
 
     def __init__(self):
         self.model = SentenceTransformer(EMBEDDING_MODEL)
-        self.dimension = 384  # Output dimension for all-MiniLM-L6-v2
+        self.dimension = 384  # MiniLM embedding output size
+
         # Load or create FAISS index
         if os.path.exists(INDEX_FILE):
             print("✅ Loading existing FAISS index...")
             self.index = faiss.read_index(INDEX_FILE)
         else:
-            print("⚡ No FAISS index found. Creating new index...")
+            print("⚡ No FAISS index found. Creating a new one...")
             self.index = faiss.IndexFlatL2(self.dimension)
 
         self.corpus = []
-        self.text_map = {}  # Map index -> original text
+        self.text_map = {}  # Stores mapping from FAISS index to original text
         self.load_corpus_into_index()
 
     def load_corpus_into_index(self):
         """
-        Reset the FAISS index and add all existing data from the DB.
+        Rebuild FAISS index from DB, ensuring real-time memory updates.
         """
-        print("🔄 Rebuilding FAISS index from DB data...")
+        print("🔄 Updating FAISS index from stored memories...")
         self.index = faiss.IndexFlatL2(self.dimension)
         self.corpus.clear()
         self.text_map.clear()
@@ -58,22 +60,24 @@ class EmbeddingsManager:
 
     def update_index(self):
         """
-        Public method to refresh the index after inserting new data.
+        Refresh FAISS index whenever new data is added.
         """
         self.load_corpus_into_index()
 
     def preprocess_query(self, query: str) -> str:
         """
-        Optional: refine the query to help FAISS retrieval (lemmatization, etc.).
+        Enhances query understanding via NLP techniques like lemmatization.
         """
         doc = nlp(query)
         keywords = [token.lemma_ for token in doc if token.pos_ in ("NOUN", "PROPN", "VERB")]
-        # If no keywords, use the original query
+
+        # Return refined query if possible; else, return original
         return " ".join(keywords) if keywords else query
 
-    def search(self, query: str, top_k: int = 1) -> str:
+    def search(self, query: str, top_k: int = 1):
         """
-        Search for the best matching data in FAISS, returns the top 1 snippet.
+        Searches FAISS for the most relevant response.
+        Returns structured data instead of hallucinated answers.
         """
         refined_query = self.preprocess_query(query)
         query_emb = self.model.encode([refined_query], show_progress_bar=False)
@@ -81,13 +85,14 @@ class EmbeddingsManager:
         distances, indices = self.index.search(np.array(query_emb, dtype=np.float32), top_k)
 
         if top_k == 0 or len(self.text_map) == 0:
-            return "I have no data."
-
-        best_idx = indices[0][0]
-        if best_idx < len(self.corpus):
-            return self.text_map[best_idx]
-        else:
             return "I don't have data for that."
 
-# Instantiate global manager
+        results = []
+        for idx in indices[0]:
+            if idx < len(self.corpus):
+                results.append(self.text_map[idx])
+
+        return results[0] if results else "I don't have data for that."
+
+# Initialize a single instance for global use
 embeddings_manager = EmbeddingsManager()
